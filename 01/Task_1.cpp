@@ -194,7 +194,7 @@ int main()
     reuseTest();
     
     //программа не завершилась раньше => все тесты пройдены
-    std::cout << "Tests are successful!" << std :: endl;
+    std::cout << "Tests are successful!" << std::endl;
     
     return 0;
 }
