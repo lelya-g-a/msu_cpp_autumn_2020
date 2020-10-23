@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cctype>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -19,24 +20,24 @@ private:
     {
         std::string word;
         int i = 0;
-        while (!isspace (str.c_str() [i]) && !(str.empty()))
+        while (!isspace (str[i]) && !(str.empty()))
         {
-            word = word + str.c_str() [i];
-            str.erase (0, 1);
+            word = word + str[i];
+            str.erase(0, 1);
         }
-        while (isspace (str.c_str() [i]) && !(str.empty()))
+        while (isspace (str[i]) && !(str.empty()))
         {
-            str.erase (0, 1);
+            str.erase(0, 1);
         }
         return word;
     }
     // проверка, является ли слово числом
-    bool isDigitToken(std::string str)
+    bool isDigitToken(const std::string &str)
     {
         bool flag = true;
         for (size_t i = 0; i < str.size(); i++)
         {
-            flag = flag & (str[i] >= '0') & (str[i] <= '9');
+            flag = flag & isdigit(str[i]);
         }
         return flag;
     }
