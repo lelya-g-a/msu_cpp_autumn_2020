@@ -13,24 +13,6 @@ private:
     std::function <void (std::string &str)> strTokenCallback;
     std::function <void ()> finishCallback;
     
-    // вспомогательные функции
-    static void f(...) {}
-    // отделить одно слово из строки
-    std::string readWord(std::string &str)
-    {
-        std::string word;
-        int i = 0;
-        while (!isspace (str[i]) && !(str.empty()))
-        {
-            word = word + str[i];
-            str.erase(0, 1);
-        }
-        while (isspace (str[i]) && !(str.empty()))
-        {
-            str.erase(0, 1);
-        }
-        return word;
-    }
     // проверка, является ли слово числом
     bool isDigitToken(const std::string &str)
     {
@@ -44,7 +26,7 @@ private:
 
 public:
     TokenParser();
-    void Parse(std::string str);
+    void Parse(const std::string &str);
     void SetStartCallback
         (std::function <void ()> func);
     void SetTokenCallback
@@ -57,22 +39,32 @@ public:
         (std::function <void ()> func);
 };
 
+// вспомогательные функции
+void f() {}
+void g(uint64_t &digit) {}
+void h(std::string &str) {}
+
 // реализация методов класса
 TokenParser :: TokenParser()
 {
     startCallback = f;
     tokenCallback = f;
-    digitTokenCallback = f;
-    strTokenCallback = f;
+    digitTokenCallback = g;
+    strTokenCallback = h;
     finishCallback = f;
 }
 
-void TokenParser :: Parse(std::string str = "\0")
+void TokenParser :: Parse(const std::string &str = {})
 {
     startCallback();
-    while (!str.empty())
+    size_t i = 0;
+    while (i != str.length())
     {
-        std::string word = readWord(str);
+        std::string word;
+        while (!isspace(str[i]) && (i != str.length()))
+        {
+            word = word + str[i++];
+        }
         tokenCallback();
         if (isDigitToken(word))
         {
@@ -82,6 +74,10 @@ void TokenParser :: Parse(std::string str = "\0")
         else
         {
             strTokenCallback(word);
+        }
+        while (isspace(str[i]) && (i != str.length()))
+        {
+            i++;
         }
     }
     finishCallback();
