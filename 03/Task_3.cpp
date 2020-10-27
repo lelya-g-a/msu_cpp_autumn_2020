@@ -22,6 +22,14 @@ public:
         }
         return row[index];
     }
+    const int & operator [] (size_t index) const
+    {
+        if ((index >= size) || (index < 0))
+        {
+            throw std::out_of_range("Bad columns index");
+        }
+        return row[index];
+    }
 };
 
 class Matrix
@@ -32,15 +40,18 @@ private:
     int **matr;
 public:
     Matrix(size_t rowsN, size_t colsN);
+    Matrix(const Matrix &M);
+    Matrix & operator = (const Matrix & M);
     size_t GetRowsNum () const;
     size_t GetColsNum () const;
     MatrixProxy operator [] (size_t index);
+    const MatrixProxy operator [] (size_t index) const;
     Matrix & operator *= (int mult);
     friend std::ostream & operator << 
         (std::ostream &ostream, const Matrix &M);
-    Matrix operator + (const Matrix &M);
-    bool operator == (const Matrix &M);
-    bool operator != (const Matrix &M);
+    Matrix operator + (const Matrix &M) const;
+    bool operator == (const Matrix &M) const;
+    bool operator != (const Matrix &M) const;
     ~Matrix();
 };
 
@@ -52,6 +63,42 @@ Matrix :: Matrix(size_t rowsN, size_t colsN) : rows(rowsN), cols(colsN)
     {
         matr[i] = new int [cols];
     }
+}
+
+Matrix :: Matrix(const Matrix &M)
+{
+    rows = M.rows;
+    cols = M.cols;
+    matr = new int *[rows];
+    for (size_t i = 0; i < rows; i++)
+    {
+        matr[i] = new int [cols];
+        for (size_t j = 0; j < cols; j++)
+        {
+            matr[i][j] = M.matr[i][j];
+        }
+    }
+}
+
+Matrix & Matrix :: operator = (const Matrix & M)
+{
+    for (size_t i = 0; i < rows; i++)
+    {
+        delete [] matr[i];
+    }
+    delete [] matr;
+    rows = M.rows;
+    cols = M.cols;
+    matr = new int *[rows];
+    for (size_t i = 0; i < rows; i++)
+    {
+        matr[i] = new int [cols];
+        for (size_t j = 0; j < cols; j++)
+        {
+            matr[i][j] = M.matr[i][j];
+        }
+    }
+    return *this;
 }
 
 size_t Matrix :: GetRowsNum () const
@@ -73,6 +120,15 @@ MatrixProxy Matrix :: operator [] (size_t index)
     return MatrixProxy (matr[index], cols);
 }
 
+const MatrixProxy Matrix :: operator [] (size_t index) const
+{
+    if ((index >= rows) || (index < 0))
+    {
+        throw std::out_of_range("Bad rows index");
+    }
+    return MatrixProxy (matr[index], cols);
+}
+
 Matrix & Matrix :: operator *= (int mult)
 {
     for (size_t i = 0; i < rows; i++)
@@ -85,7 +141,7 @@ Matrix & Matrix :: operator *= (int mult)
     return *this;
 }
 
-Matrix Matrix :: operator + (const Matrix &M)
+Matrix Matrix :: operator + (const Matrix &M) const
 {
     if ((rows != M.rows) || (cols != M.cols))
     {
@@ -102,7 +158,7 @@ Matrix Matrix :: operator + (const Matrix &M)
     return Temp;
 }
 
-bool Matrix :: operator == (const Matrix &M)
+bool Matrix :: operator == (const Matrix &M) const
 {
     if ((rows != M.rows) || (cols != M.cols))
     {
@@ -119,7 +175,7 @@ bool Matrix :: operator == (const Matrix &M)
     return flag;
 }
 
-bool Matrix :: operator != (const Matrix &M)
+bool Matrix :: operator != (const Matrix &M) const
 {
     if ((rows != M.rows) || (cols != M.cols))
     {
@@ -291,6 +347,24 @@ void excepTest()
     assert(report == "Wrong matrix sizes");
 }
 
+// проверка работы конструктора копирования и оператора присваивания
+void copyAssignTest()
+{
+    Matrix M1(2, 2);
+    M1[0][0] = 1;
+    M1[0][1] = 2;
+    M1[1][0] = 3;
+    M1[1][1] = 4;
+    
+    Matrix M2 = M1;
+    
+    Matrix M3(4, 3);
+    M3 = M2;
+    
+    assert((M2 == M1) == 1);
+    assert((M3 == M1) == 1);
+}
+
 
 int main()
 {
@@ -300,6 +374,7 @@ int main()
     compTest();
     printTest();
     excepTest();
+    copyAssignTest();
     
     std::cout << "All tests are successful!" << std::endl;
     
