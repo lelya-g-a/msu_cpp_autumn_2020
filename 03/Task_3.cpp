@@ -82,6 +82,10 @@ Matrix :: Matrix(const Matrix &M)
 
 Matrix & Matrix :: operator = (const Matrix & M)
 {
+    if (M == *this)
+    {
+        return *this;
+    }
     for (size_t i = 0; i < rows; i++)
     {
         delete [] matr[i];
@@ -360,6 +364,7 @@ void copyAssignTest()
     
     Matrix M3(4, 3);
     M3 = M2;
+    M2 = M2;
     
     assert((M2 == M1) == 1);
     assert((M3 == M1) == 1);
