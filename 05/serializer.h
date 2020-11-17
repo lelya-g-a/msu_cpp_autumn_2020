@@ -22,13 +22,11 @@ public:
     }
 
     template <class... ArgsT>
-    Error operator () (ArgsT... args)
-    {
-        return process(std::forward<ArgsT>(args)...);
-    }
+    Error operator () (ArgsT... args);
     
 private:
     std::ostream &out_;
+    bool used = false;
     
     template <class T>
     Error process (T&& elem);
@@ -36,8 +34,8 @@ private:
     template <class T, class ... ArgsT>
     Error process (T&& elem, ArgsT&&... args);
     
-    Error saveElem(const bool &elem);
-    Error saveElem(const uint64_t &elem);
+    Error saveElem(bool elem);
+    Error saveElem(uint64_t elem);
     Error saveElem(...);
 };
 
@@ -79,6 +77,20 @@ private:
 
 // реализация методов класса Serializer
 
+template <class... ArgsT>
+Error Serializer :: operator () (ArgsT... args)
+{
+    if (used)
+    {
+        return Error::CorruptedArchive;
+    }
+    else
+    {
+        used = true;
+        return process(std::forward<ArgsT>(args)...);
+    }
+}
+
 template <class T>
 Error Serializer :: process (T&& elem)
 {
@@ -98,7 +110,7 @@ Error Serializer :: process (T&& elem, ArgsT&&... args)
     }
 }
 
-Error Serializer :: saveElem(const bool &elem) 
+Error Serializer :: saveElem(bool elem) 
 {
     std::string text;
     
@@ -111,18 +123,14 @@ Error Serializer :: saveElem(const bool &elem)
         text = "false";
     }
     
-    out_ << text + Separator;
+    out_ << text << Separator;
     
     return Error::NoError;
 }
 
-Error Serializer :: saveElem(const uint64_t &elem) 
+Error Serializer :: saveElem(uint64_t elem) 
 {
-    std::stringstream ss;
-    ss << elem;
-    std::string text = ss.str();
-    
-    out_ << text + Separator;
+    out_ << elem << Separator;
     
     return Error::NoError;
 }
@@ -156,11 +164,6 @@ Error Deserializer :: process (T&& elem, ArgsT&&... args)
 
 Error Deserializer :: loadElem(bool &elem) 
 {
-    if (in_.eof())
-    {
-        return Error::CorruptedArchive;
-    }
-    
     std::string obj;
     in_ >> obj;
     if (obj == "true")
@@ -181,18 +184,17 @@ Error Deserializer :: loadElem(bool &elem)
 
 Error Deserializer :: loadElem(uint64_t &elem) 
 {
-    if (in_.eof())
-    {
-        return Error::CorruptedArchive;
-    }
-    
     std::string obj;
     in_ >> obj;
     try
     {
-        elem = std::stoll(obj);
+        elem = std::stoull(obj);
     }
-    catch (...)
+    catch (std::invalid_argument &err)
+    {
+        return Error::CorruptedArchive;
+    }
+    catch (std::out_of_range &err)
     {
         return Error::CorruptedArchive;
     }

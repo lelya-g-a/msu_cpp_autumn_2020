@@ -1,5 +1,6 @@
 #include <cassert>
 #include "serializer.h"
+#include <iostream>
 
 struct Data
 {
@@ -119,12 +120,26 @@ void Test4()
     assert(deserializer.load(x) == Error::CorruptedArchive);
 }
 
+// двойной вызов сериализатора
+void Test5()
+{
+    Data x {false, true, 123, true, 90};
+    Data y {true, true, 5673, false, 8};
+    
+    std::stringstream stream;
+    Serializer serializer(stream);
+    
+    assert(serializer.save(x) == Error::NoError);
+    assert(serializer.save(y) == Error::CorruptedArchive);
+}
+
 int main()
 {
     Test1();
     Test2();
     Test3();
     Test4();
+    Test5();
 
     return 0;
 }
