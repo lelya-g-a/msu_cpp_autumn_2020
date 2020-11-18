@@ -1,5 +1,6 @@
 // классы Error, Serializer и Deserializer
 #include <sstream>
+#pragma once
 
 enum class Error
 {
@@ -57,7 +58,7 @@ public:
     template <class... ArgsT>
     Error operator () (ArgsT&... args)
     {
-        return process(std::forward<ArgsT>(args)...);
+        return process(args...);
     }
     
 private:
@@ -87,7 +88,7 @@ Error Serializer :: operator () (ArgsT... args)
     else
     {
         used = true;
-        return process(std::forward<ArgsT>(args)...);
+        return process(args...);
     }
 }
 
@@ -102,7 +103,7 @@ Error Serializer :: process (T&& elem, ArgsT&&... args)
 {
     if (saveElem(elem) == Error::NoError)
     {
-        return process(std::forward<ArgsT>(args)...);
+        return process(args...);
     }
     else
     {
@@ -154,7 +155,7 @@ Error Deserializer :: process (T&& elem, ArgsT&&... args)
 {
     if (loadElem(elem) == Error::NoError)
     {
-        return process(std::forward<ArgsT>(args)...);
+        return process(args...);
     }
     else
     {
@@ -190,11 +191,11 @@ Error Deserializer :: loadElem(uint64_t &elem)
     {
         elem = std::stoull(obj);
     }
-    catch (std::invalid_argument &err)
+    catch (const std::invalid_argument &err)
     {
         return Error::CorruptedArchive;
     }
-    catch (std::out_of_range &err)
+    catch (const std::out_of_range &err)
     {
         return Error::CorruptedArchive;
     }
