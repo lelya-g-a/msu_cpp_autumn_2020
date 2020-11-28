@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include <vector>
 
 template < class T >
 class Allocator
@@ -68,7 +69,8 @@ public:
     Iterator<iterator> end();
     Iterator<iterator> rend();
     
-    void resize(size_t count, const T& value = 0);
+    void resize(size_t count);
+    void resize(size_t count, const T& value);
     void reserve(size_t count);
     size_t capacity() const;
     
@@ -288,7 +290,7 @@ const T& Vector<T, Alloc> :: operator [] (size_t index) const
     {
         return _vect[index];
     }
-    throw "Wrong index";
+    throw std::out_of_range("Wrong index");
 }
 
 template < class T, class Alloc >
@@ -298,7 +300,7 @@ T& Vector<T, Alloc> :: operator [] (size_t index)
     {
         return _vect[index];
     }
-    throw "Wrong index";
+    throw std::out_of_range("Wrong index");
 }
 
 template < class T, class Alloc >
@@ -320,7 +322,7 @@ void Vector<T, Alloc> :: push_back(T&& value)
         resize(_size + 1);
         _size--;
     }
-    _vect[_size++] = value;
+    _vect[_size++] = std::move(value);
 }
 
 template < class T, class Alloc >
@@ -397,6 +399,20 @@ Iterator<typename Vector<T, Alloc>::iterator>
 }
 
 template < class T, class Alloc >
+void Vector<T, Alloc> :: resize(size_t count)
+{
+    _capacity = 2 * count;
+    T* tmp = _Alloc.allocate(_capacity);
+    for (size_t i = 0; i < std::min(_size, count); i++)
+    {
+        tmp[i] = _vect[i];
+    }
+    _Alloc.deallocate(_vect);
+    _size = count;
+    _vect = std::move(tmp);
+}
+
+template < class T, class Alloc >
 void Vector<T, Alloc> :: resize(size_t count, const T& value)
 {
     _capacity = 2 * count;
@@ -411,7 +427,7 @@ void Vector<T, Alloc> :: resize(size_t count, const T& value)
     }
     _Alloc.deallocate(_vect);
     _size = count;
-    _vect = tmp;
+    _vect = std::move(tmp);
 }
 
 template < class T, class Alloc >
@@ -481,9 +497,9 @@ void Test2()
     {
         v0[10];
     }
-    catch (const char* err)
+    catch (std::out_of_range &err)
     {
-        str = err;
+        str = err.what();
     }
     assert(str == "Wrong index");
     
@@ -515,6 +531,28 @@ void Test3()
     assert(i2 == i4);
 }
 
+// Другие типы данных
+void Test4()
+{
+    Vector<std::string> v0 = {"A", "B", "C"};
+    Vector<std::vector<char>> v1 = {{'a', 'b'}, {'c'}};
+    
+    v0.resize(5);
+    assert(v0[4] == "");
+    
+    v0.resize(7, "D");
+    assert(v0[4] == "");
+    assert(v0[5] == "D");
+    
+    
+    v1.resize(3);
+    std::vector<char> v = {};
+    assert(v1[2] == v);
+    
+    v = {'d', 'e'};
+    v1.resize(5, v);
+    assert(v1[4] == v);
+}
 
 
 int main()
@@ -522,6 +560,7 @@ int main()
     Test1();
     Test2();
     Test3();
+    Test4();
     
     return 0;
 }
